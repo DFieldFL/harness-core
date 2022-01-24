@@ -484,7 +484,10 @@ public class ArtifactCollectionState extends State {
                                                                          : CollectionEntityType.ARTIFACT.name())
             .appManifestId(appManifestId)
             .appManifestSource(applicationManifest.getName())
-            .buildName(chartName)
+            .buildName(chartName
+                + (isBlank(appManifestCollectionExecutionData.getVersion())
+                        ? ""
+                        : " (" + appManifestCollectionExecutionData.getVersion() + ")"))
             .build();
     workflowExecutionService.refreshBuildExecutionSummary(context.getWorkflowExecutionId(), buildExecutionSummary);
   }
@@ -495,11 +498,18 @@ public class ArtifactCollectionState extends State {
       return;
     }
     log.info("Action aborted either due to timeout or manual user abort");
-    ArtifactCollectionExecutionData artifactCollectionExecutionData =
-        (ArtifactCollectionExecutionData) context.getStateExecutionData();
-    artifactCollectionExecutionData.setMessage(
-        "Failed to collect artifact from Artifact Server. Please verify Build No/Tag ["
-        + artifactCollectionExecutionData.getBuildNo() + "] exists");
+    if (CollectionEntityType.MANIFEST.equals(sourceType)) {
+      AppManifestCollectionExecutionData executionData =
+          (AppManifestCollectionExecutionData) context.getStateExecutionData();
+      executionData.setMessage("Failed to collect manifest from Application Manifest. Please verify chart version ["
+          + executionData.getBuildNo() + "] exists");
+    } else {
+      ArtifactCollectionExecutionData artifactCollectionExecutionData =
+          (ArtifactCollectionExecutionData) context.getStateExecutionData();
+      artifactCollectionExecutionData.setMessage(
+          "Failed to collect artifact from Artifact Server. Please verify Build No/Tag ["
+          + artifactCollectionExecutionData.getBuildNo() + "] exists");
+    }
   }
 
   @Override

@@ -287,7 +287,7 @@ public class StepYamlHandler extends BaseYamlHandler<StepYaml, GraphNode> {
     String appManifestId = (String) outputProperties.get("appManifestId");
     if (appManifestId != null) {
       ApplicationManifest applicationManifest = applicationManifestService.getById(appId, appManifestId);
-      notNullCheck("Application Manifest is null for the given id:" + appManifestId, applicationManifest, USER);
+      notNullCheck("Application Manifest not found for the given id:" + appManifestId, applicationManifest, USER);
     } else {
       List<Map<String, Object>> templateExpressions =
           (List<Map<String, Object>>) outputProperties.get("templateExpressions");
@@ -508,6 +508,19 @@ public class StepYamlHandler extends BaseYamlHandler<StepYaml, GraphNode> {
           outputProperties.put("serviceName", serviceWithArtifactStream.getName());
         }
         return;
+      case "appManifestId":
+        String appManifestId = (String) objectValue;
+        ApplicationManifest appManifest = applicationManifestService.getById(appId, appManifestId);
+        notNullCheck("Application manifest not found for the given id:" + appManifestId, appManifest, USER);
+        outputProperties.put("appManifestName", appManifest.getName());
+
+        if (inputProperties.get("serviceId") == null) {
+          Service manifestService = serviceResourceService.get(appId, appManifest.getServiceId());
+          notNullCheck(
+              "Service not found for the given application manifest id:" + appManifestId, manifestService, USER);
+          outputProperties.put("serviceName", manifestService.getName());
+        }
+        return;
       case "provisionerId":
         String provisionerId = (String) objectValue;
         InfrastructureProvisioner provisioner = infrastructureProvisionerService.get(appId, provisionerId);
@@ -573,10 +586,10 @@ public class StepYamlHandler extends BaseYamlHandler<StepYaml, GraphNode> {
         notNullCheck("Service null in the properties", serviceNameObj, USER);
         serviceName = (String) serviceNameObj;
         service = serviceResourceService.getServiceByName(appId, serviceName);
-        notNullCheck("Service is null for the given name:" + serviceName, service, USER);
+        notNullCheck("Service not found for the given name:" + serviceName, service, USER);
         ApplicationManifest applicationManifest =
             applicationManifestService.getAppManifestByName(appId, null, service.getUuid(), appManifestName);
-        notNullCheck("Application Manifest is null for the given name:" + appManifestName, applicationManifest, USER);
+        notNullCheck("Application Manifest not found for the given name:" + appManifestName, applicationManifest, USER);
         properties.put("appManifestId", applicationManifest.getUuid());
         return;
       case "provisionerName":

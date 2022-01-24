@@ -498,7 +498,7 @@ public class ArtifactCollectionState extends State {
       return;
     }
     log.info("Action aborted either due to timeout or manual user abort");
-    if (CollectionEntityType.MANIFEST.equals(sourceType)) {
+    if (context.getStateExecutionData() instanceof AppManifestCollectionExecutionData) {
       AppManifestCollectionExecutionData executionData =
           (AppManifestCollectionExecutionData) context.getStateExecutionData();
       executionData.setMessage("Failed to collect manifest from Application Manifest. Please verify chart version ["

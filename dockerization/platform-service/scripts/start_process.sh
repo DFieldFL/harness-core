@@ -6,6 +6,23 @@
 
 set -x
 
+java -version
+
+#echo "Updating java"
+#
+#curl -OL https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.14%2B9/OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz
+#tar -xzf OpenJDK11U-jdk_x64_mac_hotspot_11.0.14_9.tar.gz
+#
+#export JAVA_HOME=jdk-11.0.14+9/Contents/Home
+#export PATH=$JAVA_HOME:$PATH
+#export PATH=jdk-11.0.14+9/Contents/Home:$PATH
+#
+#echo $JAVA_HOME
+#echo $PATH
+#
+#echo "Updated java"
+#java -version
+
 if [[ -v "{hostname}" ]]; then
    export HOSTNAME=$(hostname)
 fi

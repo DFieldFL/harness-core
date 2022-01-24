@@ -272,7 +272,7 @@ public class ArtifactCollectionState extends State {
       return ExecutionResponse.builder()
           .executionStatus(ExecutionStatus.SUCCESS)
           .stateExecutionData(appManifestCollectionData)
-          .errorMessage("Collected artifact [" + lastCollectedHelmChart.getVersion() + "] for manifest source ["
+          .errorMessage("Collected chart [" + lastCollectedHelmChart.getVersion() + "] for manifest source ["
               + applicationManifest.getName() + "]")
           .build();
     }

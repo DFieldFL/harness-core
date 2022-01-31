@@ -288,8 +288,9 @@ public class DelegateQueueTask implements Runnable {
         Set<String> alreadyTriedDelegates =
             Optional.ofNullable(delegateTask.getAlreadyTriedDelegates()).orElse(Sets.newHashSet());
         int broadcastCount = delegateTask.getBroadcastCount();
-        if (isNotEmpty(alreadyTriedDelegates)
-            && alreadyTriedDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
+        // Increment broadcast count only after all eligible delegates got broadcasted in one round and reset
+        // alreadyTriedDelegates
+        if (alreadyTriedDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
           alreadyTriedDelegates = Collections.<String>emptySet();
           broadcastCount++;
         } else {

@@ -285,15 +285,26 @@ public class DelegateQueueTask implements Runnable {
           broadcastToDelegates.add(delegateId);
           eligibleDelegatesList.addLast(delegateId);
         }
-
-        long nextBroadcastInterval = nextBroadcastInterval(delegateTask, broadcastToDelegates);
+        Set<String> alreadyTriedDelegates =
+            Optional.ofNullable(delegateTask.getAlreadyTriedDelegates()).orElse(Sets.newHashSet());
+        int broadcastCount = delegateTask.getBroadcastCount();
+        if (isNotEmpty(alreadyTriedDelegates)
+            && alreadyTriedDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
+          alreadyTriedDelegates = Collections.<String>emptySet();
+          broadcastCount++;
+        } else {
+          alreadyTriedDelegates.addAll(broadcastToDelegates);
+        }
+        long nextInterval = delegateTask.getData().isAsync()
+            ? asyncIntervals.get(Math.min(broadcastCount, asyncIntervals.size() - 1))
+            : syncIntervals.get(Math.min(broadcastCount, syncIntervals.size() - 1));
         UpdateOperations<DelegateTask> updateOperations =
             persistence.createUpdateOperations(DelegateTask.class)
                 .set(DelegateTaskKeys.lastBroadcastAt, now)
-                .set(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount())
+                .set(DelegateTaskKeys.broadcastCount, broadcastCount)
                 .set(DelegateTaskKeys.eligibleToExecuteDelegateIds, eligibleDelegatesList)
-                .set(DelegateTaskKeys.alreadyTriedDelegates, delegateTask.getAlreadyTriedDelegates())
-                .set(DelegateTaskKeys.nextBroadcast, now + nextBroadcastInterval);
+                .set(DelegateTaskKeys.alreadyTriedDelegates, alreadyTriedDelegates)
+                .set(DelegateTaskKeys.nextBroadcast, now + nextInterval);
         delegateTask = persistence.findAndModify(query, updateOperations, HPersistence.returnNewOptions);
         // update failed, means this was broadcast by some other manager
         if (delegateTask == null) {
@@ -307,7 +318,6 @@ public class DelegateQueueTask implements Runnable {
           delegateSelectionLogsService.logBroadcastToDelegate(
               batch, Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId());
         }
-
         delegateSelectionLogsService.save(batch);
 
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
@@ -330,16 +340,5 @@ public class DelegateQueueTask implements Runnable {
 
   private boolean shouldExpireTask(DelegateTask task) {
     return !task.isForceExecute();
-  }
-
-  private long nextBroadcastInterval(DelegateTask task, List<String> broadcastToDelegates) {
-    AtomicInteger broadcastCount = new AtomicInteger(task.getBroadcastCount());
-    Set<String> alreadyTriedDelegates = Optional.ofNullable(task.getAlreadyTriedDelegates()).orElse(Sets.newHashSet());
-    Optional.of(alreadyTriedDelegates.containsAll(task.getEligibleToExecuteDelegateIds()))
-        .orElseGet(() -> alreadyTriedDelegates.addAll(broadcastToDelegates));
-    task.setAlreadyTriedDelegates(Collections.<String>emptySet());
-    task.setBroadcastCount(broadcastCount.getAndIncrement());
-    return task.getData().isAsync() ? asyncIntervals.get(Math.min(broadcastCount.get(), asyncIntervals.size() - 1))
-                                    : syncIntervals.get(Math.min(broadcastCount.get(), syncIntervals.size() - 1));
   }
 }

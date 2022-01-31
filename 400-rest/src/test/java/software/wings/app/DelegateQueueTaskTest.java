@@ -44,6 +44,7 @@ import software.wings.service.intfc.DelegateTaskServiceClassic;
 
 import com.google.inject.Inject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import org.atmosphere.cpr.Broadcaster;
 import org.atmosphere.cpr.BroadcasterFactory;
@@ -221,5 +222,78 @@ public class DelegateQueueTaskTest extends WingsBaseTest {
     delegateQueueTask.rebroadcastUnassignedTasks();
     ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
     verify(broadcaster, times(0)).broadcast(argumentCaptor.capture());
+  }
+
+  @Test
+  @Owner(developers = JENNY)
+  @Category(UnitTests.class)
+  public void testRebroadcast_async() {
+    DelegateTask delegateTask = DelegateTask.builder()
+                                    .accountId(ACCOUNT_ID)
+                                    .version(versionInfoManager.getVersionInfo().getVersion())
+                                    .status(Status.QUEUED)
+                                    .expiry(System.currentTimeMillis() + 60000)
+                                    .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(true).build())
+                                    .build();
+    Broadcaster broadcaster = mock(Broadcaster.class);
+    when(broadcasterFactory.lookup(anyString(), eq(true))).thenReturn(broadcaster);
+    delegateTask.setBroadcastCount(0);
+    delegateTask.setNextBroadcast(System.currentTimeMillis());
+    delegateTask.setEligibleToExecuteDelegateIds(
+        new LinkedList<>(Arrays.asList(DELEGATE_ID, "d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9")));
+    delegateTask.setAlreadyTriedDelegates(Collections.singleton(DELEGATE_ID));
+    persistence.save(delegateTask);
+    when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
+    delegateQueueTask.rebroadcastUnassignedTasks();
+
+    ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
+    verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
+
+    DelegateTaskBroadcast delegateTaskBroadcast = argumentCaptor.getValue();
+    assertThat(delegateTaskBroadcast).isNotNull();
+    assertThat(delegateTaskBroadcast.getVersion()).isEqualTo(delegateTask.getVersion());
+    assertThat(delegateTaskBroadcast.getAccountId()).isEqualTo(delegateTask.getAccountId());
+    assertThat(delegateTaskBroadcast.getTaskId()).isEqualTo(delegateTask.getUuid());
+    assertThat(delegateTaskBroadcast.getBroadcastToDelegatesIds()).isNotEmpty();
+
+    DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
+    assertThat(task.getBroadcastCount()).isEqualTo(0);
+    assertThat(task.getAlreadyTriedDelegates().size()).isEqualTo(10);
+  }
+
+  @Test
+  @Owner(developers = JENNY)
+  @Category(UnitTests.class)
+  public void testRebroadcast_sync() {
+    DelegateTask delegateTask = DelegateTask.builder()
+                                    .accountId(ACCOUNT_ID)
+                                    .version(versionInfoManager.getVersionInfo().getVersion())
+                                    .status(Status.QUEUED)
+                                    .expiry(System.currentTimeMillis() + 60000)
+                                    .data(TaskData.builder().taskType(TaskType.HTTP.name()).async(true).build())
+                                    .build();
+    Broadcaster broadcaster = mock(Broadcaster.class);
+    when(broadcasterFactory.lookup(anyString(), eq(true))).thenReturn(broadcaster);
+    delegateTask.setBroadcastCount(0);
+    delegateTask.setNextBroadcast(System.currentTimeMillis());
+    delegateTask.setEligibleToExecuteDelegateIds(new LinkedList<>(Collections.singletonList(DELEGATE_ID)));
+    delegateTask.setAlreadyTriedDelegates(Collections.singleton(DELEGATE_ID));
+    persistence.save(delegateTask);
+    when(delegateService.checkDelegateConnected(anyString(), anyString())).thenReturn(true);
+    delegateQueueTask.rebroadcastUnassignedTasks();
+
+    ArgumentCaptor<DelegateTaskBroadcast> argumentCaptor = ArgumentCaptor.forClass(DelegateTaskBroadcast.class);
+    verify(broadcaster, times(1)).broadcast(argumentCaptor.capture());
+
+    DelegateTaskBroadcast delegateTaskBroadcast = argumentCaptor.getValue();
+    assertThat(delegateTaskBroadcast).isNotNull();
+    assertThat(delegateTaskBroadcast.getVersion()).isEqualTo(delegateTask.getVersion());
+    assertThat(delegateTaskBroadcast.getAccountId()).isEqualTo(delegateTask.getAccountId());
+    assertThat(delegateTaskBroadcast.getTaskId()).isEqualTo(delegateTask.getUuid());
+    assertThat(delegateTaskBroadcast.getBroadcastToDelegatesIds()).isNotEmpty();
+
+    DelegateTask task = persistence.get(DelegateTask.class, delegateTask.getUuid());
+    assertThat(task.getBroadcastCount()).isEqualTo(1);
+    assertThat(task.getAlreadyTriedDelegates()).isNullOrEmpty();
   }
 }

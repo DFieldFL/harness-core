@@ -80,8 +80,6 @@ public class DeploymentFreezeActivationHandler implements Handler<GovernanceConf
                        .field(GovernanceConfigKeys.nextIterations)
                        .notEqual(null)
                        .field(GovernanceConfigKeys.nextIterations)
-                       .notEqual(Collections.emptyList())
-                       .field(GovernanceConfigKeys.nextIterations)
                        .not()
                        .sizeEq(0))
             .throttleInterval(ofSeconds(45)));

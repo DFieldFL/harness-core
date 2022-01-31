@@ -10,11 +10,27 @@ package io.harness.ngmigration.service;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.connector.ConnectorDTO;
+import io.harness.connector.ConnectorResponseDTO;
+import io.harness.network.Http;
+import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
+import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.core.utils.NGYamlUtils;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
+import io.harness.ngmigration.client.NGClient;
+import io.harness.ngmigration.client.PmsClient;
+import io.harness.plancreator.pipeline.PipelineConfig;
+import io.harness.pms.governance.PipelineSaveResponse;
+import io.harness.pms.yaml.YamlUtils;
+import io.harness.remote.NGObjectMapperHelper;
+import io.harness.remote.client.ServiceHttpClientConfig;
+import io.harness.serializer.JsonUtils;
 
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
@@ -24,8 +40,10 @@ import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.ngmigration.NGYamlFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -46,12 +64,20 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import org.apache.commons.io.FileUtils;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class DiscoveryService {
-  @Inject private NgMigrationFactory migrationFactory;
+  @Inject private io.harness.ngmigration.service.NgMigrationFactory migrationFactory;
+  @Inject @Named("ngClientConfig") private ServiceHttpClientConfig ngClientConfig;
+  @Inject @Named("pipelineServiceClientConfig") private ServiceHttpClientConfig pipelineServiceClientConfig;
 
   private void travel(String accountId, String appId, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId parent, DiscoveryNode discoveryNode) {
@@ -100,7 +126,7 @@ public class DiscoveryService {
     return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
   }
 
-  public List<NGYamlFile> migrateEntity(MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {
+  public List<NGYamlFile> migrateEntity(String auth, MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {
     Map<CgEntityId, CgEntityNode> entities = discoveryResult.getEntities();
     Map<CgEntityId, Set<CgEntityId>> graph = discoveryResult.getLinks();
     CgEntityId root = discoveryResult.getRoot();
@@ -109,7 +135,59 @@ public class DiscoveryService {
     Map<CgEntityId, Set<CgEntityId>> leafTracker =
         graph.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> Sets.newHashSet(e.getValue())));
     List<NGYamlFile> ngYamlFiles = getAllYamlFiles(inputDTO, entities, graph, root, migratedEntities, leafTracker);
+    exportZip(ngYamlFiles);
+    createEntities(auth, inputDTO, ngYamlFiles);
+    return ngYamlFiles;
+  }
 
+  private static <T> T getRestClient(ServiceHttpClientConfig ngClientConfig, Class<T> clazz) {
+    ObjectMapper objectMapper = new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    OkHttpClient okHttpClient = Http.getOkHttpClient(ngClientConfig.getBaseUrl(), false);
+    Retrofit retrofit = new Retrofit.Builder()
+                            .client(okHttpClient)
+                            .baseUrl(ngClientConfig.getBaseUrl())
+                            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                            .build();
+    return retrofit.create(clazz);
+  }
+
+  private void createEntities(String auth, MigrationInputDTO inputDTO, List<NGYamlFile> ngYamlFiles) {
+    String accountIdentifier = inputDTO.getAccountIdentifier();
+    NGClient ngClient = getRestClient(ngClientConfig, NGClient.class);
+    PmsClient pmsClient = getRestClient(pipelineServiceClientConfig, PmsClient.class);
+    // Sort such that we create secrets first then connectors and so on.
+    MigratorUtility.sort(ngYamlFiles);
+    for (NGYamlFile file : ngYamlFiles) {
+      try {
+        if (file.getYaml() instanceof ConnectorDTO) {
+          Response<ResponseDTO<ConnectorResponseDTO>> resp =
+              ngClient.createConnector(auth, accountIdentifier, JsonUtils.asTree(file.getYaml())).execute();
+          log.info("Connector creation Response details {}", resp.code());
+        }
+
+        if (file.getYaml() instanceof SecretRequestWrapper) {
+          Response<ResponseDTO<SecretResponseWrapper>> resp =
+              ngClient.createSecret(auth, accountIdentifier, JsonUtils.asTree(file.getYaml())).execute();
+          log.info("Secret creation Response details {}", resp.code());
+        }
+
+        if (file.getYaml() instanceof PipelineConfig) {
+          Response<ResponseDTO<PipelineSaveResponse>> resp =
+              pmsClient
+                  .createPipeline(auth, accountIdentifier, inputDTO.getOrgIdentifier(), inputDTO.getProjectIdentifier(),
+                      RequestBody.create(MediaType.parse("application/yaml"), YamlUtils.write(file.getYaml())))
+                  .execute();
+          log.info("Pipeline creation Response details {}", resp.code());
+        }
+
+      } catch (IOException e) {
+        log.error("Cannot create connector", e);
+      }
+    }
+  }
+
+  private void exportZip(List<NGYamlFile> ngYamlFiles) {
     // Write the files to ZIP folder
     try {
       FileUtils.cleanDirectory(new File("/tmp/zip-output"));
@@ -129,7 +207,6 @@ public class DiscoveryService {
     } catch (IOException e) {
       log.warn("Unable to save zip file");
     }
-    return ngYamlFiles;
   }
 
   private List<CgEntityId> getLeafNodes(Map<CgEntityId, Set<CgEntityId>> graph) {

@@ -383,11 +383,13 @@ public class K8sCanaryRequestHandlerTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldGetReleaseDataFromConfigMapUsingK8sClient() throws Exception {
     final String releaseName = "releaseName";
-    final K8sCanaryDeployRequest deployRequest = K8sCanaryDeployRequest.builder()
-                                                     .valuesYamlList(emptyList())
-                                                     .releaseName(releaseName)
-                                                     .k8sInfraDelegateConfig(k8sInfraDelegateConfig)
-                                                     .build();
+    final K8sCanaryDeployRequest deployRequest =
+        K8sCanaryDeployRequest.builder()
+            .valuesYamlList(emptyList())
+            .releaseName(releaseName)
+            .manifestDelegateConfig(KustomizeManifestDelegateConfig.builder().build())
+            .k8sInfraDelegateConfig(k8sInfraDelegateConfig)
+            .build();
     final K8sDelegateTaskParams delegateTaskParams = K8sDelegateTaskParams.builder().build();
 
     when(k8sTaskHelperBase.renderTemplate(delegateTaskParams, manifestDelegateConfig, manifestFileDirectory,

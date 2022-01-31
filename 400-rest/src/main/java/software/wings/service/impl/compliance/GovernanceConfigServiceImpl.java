@@ -184,6 +184,8 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
       if (newDeploymentFreezeEnabled) {
         governanceConfig.recalculateNextIterations(GovernanceConfigKeys.nextIterations, true, 0);
         governanceConfig.recalculateNextIterations(GovernanceConfigKeys.nextCloseIterations, true, 0);
+        updateOperations.set(GovernanceConfigKeys.nextIterations, governanceConfig.getNextIterations());
+        updateOperations.set(GovernanceConfigKeys.nextCloseIterations, governanceConfig.getNextCloseIterations());
       }
 
       GovernanceConfig updatedSetting =

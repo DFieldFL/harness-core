@@ -104,23 +104,6 @@ public class TerraformApplyStepTest extends CategoryTest {
         .putSetupAbstractions("orgIdentifier", "test-org")
         .build();
   }
-  @Data
-  @Builder
-  private static class gitStoreConfig {
-    private String branch;
-    private FetchType fetchType;
-    private ParameterField<String> folderPath;
-    private ParameterField<String> connectoref;
-  }
-
-  @Data
-  @Builder
-  private static class artifactoryStoreConfig {
-    private String repositoryPath;
-    private String artifactoryName;
-    private String version;
-    private String connectorRef;
-  }
 
   @Captor ArgumentCaptor<List<EntityDetail>> captor;
 
@@ -129,21 +112,23 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidateResourcesWithGithubStore() {
     Ambiance ambiance = getAmbiance();
-    gitStoreConfig gitStoreConfigFiles = gitStoreConfig.builder()
-                                             .branch("master")
-                                             .fetchType(FetchType.BRANCH)
-                                             .folderPath(ParameterField.createValueField("Config/"))
-                                             .connectoref(ParameterField.createValueField("terraform"))
-                                             .build();
-    gitStoreConfig gitStoreVarFiles = gitStoreConfig.builder()
-                                          .branch("master")
-                                          .fetchType(FetchType.BRANCH)
-                                          .folderPath(ParameterField.createValueField("VarFiles/"))
-                                          .connectoref(ParameterField.createValueField("terraform"))
-                                          .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("Config/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("VarFiles/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
 
     TerraformApplyStepParameters applyStepParameters =
-        generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+        TerraformStepDataGenerator.generateApplyStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(applyStepParameters).build();
     terraformApplyStep.validateResources(ambiance, stepElementParameters);
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -162,21 +147,19 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testValidateResourcesWithArtifactoryStore() {
     Ambiance ambiance = getAmbiance();
-    artifactoryStoreConfig artifactoryStoreConfigFiles = artifactoryStoreConfig.builder()
-                                                             .artifactoryName("artifactoryConfigFiles")
-                                                             .connectorRef("connectorRef")
-                                                             .repositoryPath("repositoryPath")
-                                                             .version("1.0.0")
-                                                             .build();
-    artifactoryStoreConfig artifactoryStoreVarFiles = artifactoryStoreConfig.builder()
-                                                          .artifactoryName("artifactoryVarFiles")
-                                                          .connectorRef("connectorRef2")
-                                                          .repositoryPath("repositoryPathtoVars")
-                                                          .version("1.0.2")
-                                                          .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef")
+            .repositoryPath("repositoryPath")
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef2")
+            .repositoryPath("repositoryPathtoVars")
+            .build();
 
-    TerraformApplyStepParameters applyStepParameters =
-        generateStepPlan(StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+    TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(
+        StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(applyStepParameters).build();
     terraformApplyStep.validateResources(ambiance, stepElementParameters);
     verify(pipelineRbacHelper, times(1)).checkRuntimePermissions(eq(ambiance), captor.capture(), eq(true));
@@ -212,21 +195,23 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTaskAfterRbacWithGithub() {
     Ambiance ambiance = getAmbiance();
-    gitStoreConfig gitStoreConfigFiles = gitStoreConfig.builder()
-                                             .branch("master")
-                                             .fetchType(FetchType.BRANCH)
-                                             .folderPath(ParameterField.createValueField("Config/"))
-                                             .connectoref(ParameterField.createValueField("terraform"))
-                                             .build();
-    gitStoreConfig gitStoreVarFiles = gitStoreConfig.builder()
-                                          .branch("master")
-                                          .fetchType(FetchType.BRANCH)
-                                          .folderPath(ParameterField.createValueField("VarFiles/"))
-                                          .connectoref(ParameterField.createValueField("terraform"))
-                                          .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreConfigFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("Config/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
+    TerraformStepDataGenerator.GitStoreConfig gitStoreVarFiles =
+        TerraformStepDataGenerator.GitStoreConfig.builder()
+            .branch("master")
+            .fetchType(FetchType.BRANCH)
+            .folderPath(ParameterField.createValueField("VarFiles/"))
+            .connectoref(ParameterField.createValueField("terraform"))
+            .build();
 
     TerraformApplyStepParameters applyStepParameters =
-        generateStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
+        TerraformStepDataGenerator.generateApplyStepPlan(StoreConfigType.GITHUB, gitStoreConfigFiles, gitStoreVarFiles);
 
     GitConfigDTO gitConfigDTO = GitConfigDTO.builder()
                                     .gitAuthType(GitAuthType.HTTP)
@@ -266,23 +251,22 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTaskAfterRbacWithArtifactory() {
     Ambiance ambiance = getAmbiance();
-    artifactoryStoreConfig artifactoryStoreConfigFiles = artifactoryStoreConfig.builder()
-                                                             .artifactoryName("artifactoryConfigFiles")
-                                                             .connectorRef("connectorRef")
-                                                             .repositoryPath("repositoryPath")
-                                                             .version("1.0.0")
-                                                             .build();
-    artifactoryStoreConfig artifactoryStoreVarFiles = artifactoryStoreConfig.builder()
-                                                          .artifactoryName("artifactoryVarFiles")
-                                                          .connectorRef("connectorRef2")
-                                                          .repositoryPath("repositoryPathtoVars")
-                                                          .version("1.0.2")
-                                                          .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef")
+            .repositoryPath("repositoryPath")
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef2")
+            .repositoryPath("repositoryPathtoVars")
+            .build();
 
-    TerraformApplyStepParameters applyStepParameters =
-        generateStepPlan(StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+    TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(
+        StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
 
-    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = createStoreDelegateConfig();
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
+        TerraformStepDataGenerator.createStoreDelegateConfig();
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(applyStepParameters).build();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
     doReturn("test-account/test-org/test-project/Id").when(terraformStepHelper).generateFullIdentifier(any(), any());
@@ -388,24 +372,23 @@ public class TerraformApplyStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTaskAfterRbacInheritPlanWithArtifactory() {
     Ambiance ambiance = getAmbiance();
-    artifactoryStoreConfig artifactoryStoreConfigFiles = artifactoryStoreConfig.builder()
-                                                             .artifactoryName("artifactoryConfigFiles")
-                                                             .connectorRef("connectorRef")
-                                                             .repositoryPath("repositoryPath")
-                                                             .version("1.0.0")
-                                                             .build();
-    artifactoryStoreConfig artifactoryStoreVarFiles = artifactoryStoreConfig.builder()
-                                                          .artifactoryName("artifactoryVarFiles")
-                                                          .connectorRef("connectorRef2")
-                                                          .repositoryPath("repositoryPathtoVars")
-                                                          .version("1.0.2")
-                                                          .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreConfigFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef")
+            .repositoryPath("repositoryPath")
+            .build();
+    TerraformStepDataGenerator.ArtifactoryStoreConfig artifactoryStoreVarFiles =
+        TerraformStepDataGenerator.ArtifactoryStoreConfig.builder()
+            .connectorRef("connectorRef2")
+            .repositoryPath("repositoryPathtoVars")
+            .build();
 
-    TerraformApplyStepParameters applyStepParameters =
-        generateStepPlan(StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
+    TerraformApplyStepParameters applyStepParameters = TerraformStepDataGenerator.generateApplyStepPlan(
+        StoreConfigType.ARTIFACTORY, artifactoryStoreConfigFiles, artifactoryStoreVarFiles);
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(applyStepParameters).build();
 
-    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = createStoreDelegateConfig();
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
+        TerraformStepDataGenerator.createStoreDelegateConfig();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
     doReturn("test-account/test-org/test-project/Id").when(terraformStepHelper).generateFullIdentifier(any(), any());
     doReturn(artifactoryStoreDelegateConfig)
@@ -565,7 +548,8 @@ public class TerraformApplyStepTest extends CategoryTest {
             .configuration(
                 TerraformStepConfigurationParameters.builder().type(TerraformStepConfigurationType.INLINE).build())
             .build();
-    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig = createStoreDelegateConfig();
+    ArtifactoryStoreDelegateConfig artifactoryStoreDelegateConfig =
+        TerraformStepDataGenerator.createStoreDelegateConfig();
 
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(applyStepParameters).build();
     doReturn("test-account/test-org/test-project/Id").when(terraformStepHelper).generateFullIdentifier(any(), any());
@@ -714,116 +698,5 @@ public class TerraformApplyStepTest extends CategoryTest {
     } catch (InvalidRequestException invalidRequestException) {
       assertThat(invalidRequestException.getMessage()).isEqualTo(message);
     }
-  }
-  private TerraformApplyStepParameters generateStepPlan(
-      StoreConfigType storeType, Object storeConfigFilesParam, Object varStoreConfigFilesParam) {
-    StoreConfig storeConfigFiles;
-    StoreConfig storeVarFiles;
-    TerraformConfigFilesWrapper configFilesWrapper = new TerraformConfigFilesWrapper();
-    RemoteTerraformVarFileSpec remoteTerraformVarFileSpec = new RemoteTerraformVarFileSpec();
-    switch (storeType) {
-      case GIT:
-      case GITHUB:
-      case GITLAB:
-      case BITBUCKET:
-        // Create the store file for the terraform files
-        gitStoreConfig gitStoreConfigFiles = (gitStoreConfig) storeConfigFilesParam;
-        storeConfigFiles =
-            GithubStore.builder()
-                .branch(ParameterField.createValueField(gitStoreConfigFiles.branch))
-                .gitFetchType(gitStoreConfigFiles.fetchType)
-                .folderPath(ParameterField.createValueField(gitStoreConfigFiles.folderPath.getValue()))
-                .connectorRef(ParameterField.createValueField(gitStoreConfigFiles.connectoref.getValue()))
-                .build();
-        configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
-        // Create the store file for the terraform variables
-        gitStoreConfig gitStoreVarFiles = (gitStoreConfig) varStoreConfigFilesParam;
-        storeVarFiles = GithubStore.builder()
-                            .branch(ParameterField.createValueField(gitStoreVarFiles.branch))
-                            .gitFetchType(gitStoreVarFiles.fetchType)
-                            .folderPath(ParameterField.createValueField(gitStoreVarFiles.folderPath.getValue()))
-                            .connectorRef(ParameterField.createValueField(gitStoreVarFiles.connectoref.getValue()))
-                            .build();
-        remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
-        break;
-      case ARTIFACTORY:
-        // Create the store file for the terraform files
-        artifactoryStoreConfig artifactoryStoreConfigFiles = (artifactoryStoreConfig) storeConfigFilesParam;
-        storeConfigFiles =
-            ArtifactoryStoreConfig.builder()
-                .repositoryPath(ParameterField.createValueField(artifactoryStoreConfigFiles.repositoryPath))
-                .artifactName(ParameterField.createValueField(artifactoryStoreConfigFiles.artifactoryName))
-                .version(ParameterField.createValueField(artifactoryStoreConfigFiles.version))
-                .connectorRef(ParameterField.createValueField(artifactoryStoreConfigFiles.connectorRef))
-                .build();
-        configFilesWrapper.setStore(StoreConfigWrapper.builder().spec(storeConfigFiles).type(storeType).build());
-        // Create the store file for the terraform variables
-        artifactoryStoreConfig artifactoryStoreVarFiles = (artifactoryStoreConfig) varStoreConfigFilesParam;
-        storeVarFiles = ArtifactoryStoreConfig.builder()
-                            .repositoryPath(ParameterField.createValueField(artifactoryStoreVarFiles.repositoryPath))
-                            .artifactName(ParameterField.createValueField(artifactoryStoreVarFiles.artifactoryName))
-                            .version(ParameterField.createValueField(artifactoryStoreVarFiles.version))
-                            .connectorRef(ParameterField.createValueField(artifactoryStoreVarFiles.connectorRef))
-                            .build();
-        remoteTerraformVarFileSpec.setStore(StoreConfigWrapper.builder().spec(storeVarFiles).type(storeType).build());
-        break;
-      default:
-        break;
-    }
-    InlineTerraformVarFileSpec inlineTerraformVarFileSpec = new InlineTerraformVarFileSpec();
-    inlineTerraformVarFileSpec.setContent(ParameterField.createValueField("var-content"));
-    InlineTerraformBackendConfigSpec inlineTerraformBackendConfigSpec = new InlineTerraformBackendConfigSpec();
-    inlineTerraformBackendConfigSpec.setContent(ParameterField.createValueField("back-content"));
-    TerraformBackendConfig terraformBackendConfig = new TerraformBackendConfig();
-    terraformBackendConfig.setTerraformBackendConfigSpec(inlineTerraformBackendConfigSpec);
-    LinkedHashMap<String, TerraformVarFile> varFilesMap = new LinkedHashMap<>();
-    varFilesMap.put("var-file-01",
-        TerraformVarFile.builder().identifier("var-file-01").type("Inline").spec(inlineTerraformVarFileSpec).build());
-    varFilesMap.put("var-file-02",
-        TerraformVarFile.builder().identifier("var-file-02").type("Remote").spec(remoteTerraformVarFileSpec).build());
-    return TerraformApplyStepParameters.infoBuilder()
-        .provisionerIdentifier(ParameterField.createValueField("provId_$"))
-        .configuration(TerraformStepConfigurationParameters.builder()
-                           .type(TerraformStepConfigurationType.INLINE)
-                           .spec(TerraformExecutionDataParameters.builder()
-                                     .configFiles(configFilesWrapper)
-                                     .varFiles(varFilesMap)
-                                     .build())
-                           .build())
-        .build();
-  }
-
-  private ArtifactoryStoreDelegateConfig createStoreDelegateConfig() {
-    // Create auth with user and password
-    char[] password = {'r', 's', 't', 'u', 'v'};
-    ArtifactoryAuthenticationDTO artifactoryAuthenticationDTO =
-        ArtifactoryAuthenticationDTO.builder()
-            .authType(ArtifactoryAuthType.USER_PASSWORD)
-            .credentials(ArtifactoryUsernamePasswordAuthDTO.builder()
-                             .username("username")
-                             .passwordRef(SecretRefData.builder().decryptedValue(password).build())
-                             .build())
-            .build();
-
-    // Create DTO connector
-    ArtifactoryConnectorDTO artifactoryConnectorDTO = ArtifactoryConnectorDTO.builder()
-                                                          .artifactoryServerUrl("http://artifactory.com")
-                                                          .auth(artifactoryAuthenticationDTO)
-                                                          .delegateSelectors(Collections.singleton("delegateSelector"))
-                                                          .build();
-    ConnectorInfoDTO connectorInfoDTO = ConnectorInfoDTO.builder()
-                                            .connectorType(ConnectorType.ARTIFACTORY)
-                                            .identifier("connectorRef")
-                                            .name("connectorName")
-                                            .connectorConfig(artifactoryConnectorDTO)
-                                            .build();
-
-    return ArtifactoryStoreDelegateConfig.builder()
-        .artifactName("artifactName")
-        .repositoryPath("repositoryPath")
-        .version("1.0.0")
-        .connectorDTO(connectorInfoDTO)
-        .succeedIfFileNotFound(false)
-        .build();
   }
 }

@@ -18,6 +18,7 @@ import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.maintenance.MaintenanceController.getMaintenanceFlag;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_EXPIRED;
+import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_REBROADCAST;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import static java.lang.System.currentTimeMillis;
@@ -261,7 +262,6 @@ public class DelegateQueueTask implements Runnable {
       int count = 0;
       while (iterator.hasNext()) {
         DelegateTask delegateTask = iterator.next();
-
         Query<DelegateTask> query = persistence.createQuery(DelegateTask.class, excludeAuthority)
                                         .filter(DelegateTaskKeys.uuid, delegateTask.getUuid())
                                         .filter(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount());
@@ -317,19 +317,16 @@ public class DelegateQueueTask implements Runnable {
           delegateSelectionLogsService.logBroadcastToDelegate(
               batch, Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId());
         }
+
         delegateSelectionLogsService.save(batch);
 
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);
              AutoLogContext ignore2 = new AccountLogContext(delegateTask.getAccountId(), OVERRIDE_ERROR)) {
-          if (delegateTask.getBroadcastCount() > 1) {
-            log.info("Rebroadcast queued task id {} on broadcast attempt: {} on round {} to {} ",
-                delegateTask.getUuid(), delegateTask.getBroadcastCount(), delegateTask.getBroadcastRound(),
-                delegateTask.getBroadcastToDelegateIds());
-          } else {
-            log.debug("Broadcast queued task id {}. Broadcast count: {}", delegateTask.getUuid(),
-                delegateTask.getBroadcastCount());
-          }
+          log.info("Rebroadcast queued task id {} on broadcast attempt: {} on round {} to {} ", delegateTask.getUuid(),
+              delegateTask.getBroadcastCount(), delegateTask.getBroadcastRound(),
+              delegateTask.getBroadcastToDelegateIds());
+          delegateMetricsService.recordDelegateTaskMetrics(delegateTask, DELEGATE_TASK_REBROADCAST);
           broadcastHelper.rebroadcastDelegateTask(delegateTask);
           count++;
         }

@@ -102,6 +102,16 @@ public class SLOHealthIndicatorServiceImpl implements SLOHealthIndicatorService 
     upsert(projectParams, serviceLevelObjective, serviceLevelIndicator);
   }
 
+  @Override
+  public void delete(ProjectParams projectParams, String serviceLevelObjectiveIdentifier) {
+    hPersistence.delete(
+        hPersistence.createQuery(SLOHealthIndicator.class)
+            .filter(SLOHealthIndicatorKeys.accountId, projectParams.getAccountIdentifier())
+            .filter(SLOHealthIndicatorKeys.orgIdentifier, projectParams.getOrgIdentifier())
+            .filter(SLOHealthIndicatorKeys.projectIdentifier, projectParams.getProjectIdentifier())
+            .filter(SLOHealthIndicatorKeys.serviceLevelObjectiveIdentifier, serviceLevelObjectiveIdentifier));
+  }
+
   private void upsert(ProjectParams projectParams, ServiceLevelObjective serviceLevelObjective,
       ServiceLevelIndicator serviceLevelIndicator) {
     SLOHealthIndicator sloHealthIndicator = getBySLOIdentifier(projectParams, serviceLevelObjective.getIdentifier());

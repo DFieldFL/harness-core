@@ -458,9 +458,8 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
         }
         // shuffle the eligible delegates to evenly distribute the load
         Collections.shuffle(eligibleListOfDelegates);
-        String delegateToBroadcast = getDelegateIdForFirstBroadcast(task, eligibleListOfDelegates);
-        task.setBroadcastToDelegateIds(Lists.newArrayList(delegateToBroadcast));
-        task.setAlreadyTriedDelegates(Sets.newHashSet(delegateToBroadcast));
+        task.setBroadcastToDelegateIds(
+            Lists.newArrayList(getDelegateIdForFirstBroadcast(task, eligibleListOfDelegates)));
 
         delegateSelectionLogsService.logEligibleDelegatesToExecuteTask(
             batch, Sets.newHashSet(eligibleListOfDelegates), task.getAccountId());

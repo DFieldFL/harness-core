@@ -58,8 +58,6 @@ import com.google.inject.Inject;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -67,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.Key;
@@ -93,11 +92,8 @@ public class DelegateQueueTask implements Runnable {
   @Inject private DelegateSelectionLogsService delegateSelectionLogsService;
   @Inject private DelegateMetricsService delegateMetricsService;
 
-  // async tasks{5sec, 30 Sec, 1 Min, 2 Min, 4 Min, 8 Min,
-  private List<Integer> asyncIntervals = Arrays.asList(5, 30, 60, 120, 240, 480, 900);
-
-  // sync tasks{5sec, 30 Sec, 1 Min, 2 Min, 4 Min
-  private List<Integer> syncIntervals = Arrays.asList(5, 30, 60, 120, 240);
+  private static long BROADCAST_INTERVAL = TimeUnit.MINUTES.toMillis(1);
+  private static int MAX_BROADCAST_ROUND = 3;
 
   @Override
   public void run() {
@@ -256,6 +252,8 @@ public class DelegateQueueTask implements Runnable {
                                                    .lessThan(now)
                                                    .field(DelegateTaskKeys.expiry)
                                                    .greaterThan(now)
+                                                   .field(DelegateTaskKeys.broadcastRound)
+                                                   .lessThan(MAX_BROADCAST_ROUND)
                                                    .field(DelegateTaskKeys.delegateId)
                                                    .doesNotExist();
 
@@ -263,6 +261,7 @@ public class DelegateQueueTask implements Runnable {
       int count = 0;
       while (iterator.hasNext()) {
         DelegateTask delegateTask = iterator.next();
+
         Query<DelegateTask> query = persistence.createQuery(DelegateTask.class, excludeAuthority)
                                         .filter(DelegateTaskKeys.uuid, delegateTask.getUuid())
                                         .filter(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount());
@@ -285,24 +284,23 @@ public class DelegateQueueTask implements Runnable {
           broadcastToDelegates.add(delegateId);
           eligibleDelegatesList.addLast(delegateId);
         }
+        long nextInterval = TimeUnit.SECONDS.toMillis(5);
+        AtomicInteger broadcastRoundCount = new AtomicInteger(delegateTask.getBroadcastRound());
         Set<String> alreadyTriedDelegates =
             Optional.ofNullable(delegateTask.getAlreadyTriedDelegates()).orElse(Sets.newHashSet());
-        int broadcastCount = delegateTask.getBroadcastCount();
-        // Increment broadcast count only after all eligible delegates got broadcasted in one round and reset
-        // alreadyTriedDelegates
+
+        // if all delegates got one round of rebroadcast, then increase broadcast interval & broadcastRound
         if (alreadyTriedDelegates.containsAll(delegateTask.getEligibleToExecuteDelegateIds())) {
-          alreadyTriedDelegates = Collections.<String>emptySet();
-          broadcastCount++;
-        } else {
-          alreadyTriedDelegates.addAll(broadcastToDelegates);
+          alreadyTriedDelegates = Sets.newHashSet();
+          nextInterval = (long) broadcastRoundCount.incrementAndGet() * BROADCAST_INTERVAL;
         }
-        long nextInterval = delegateTask.getData().isAsync()
-            ? asyncIntervals.get(Math.min(broadcastCount, asyncIntervals.size() - 1))
-            : syncIntervals.get(Math.min(broadcastCount, syncIntervals.size() - 1));
+        alreadyTriedDelegates.addAll(broadcastToDelegates);
+
         UpdateOperations<DelegateTask> updateOperations =
             persistence.createUpdateOperations(DelegateTask.class)
                 .set(DelegateTaskKeys.lastBroadcastAt, now)
-                .set(DelegateTaskKeys.broadcastCount, broadcastCount)
+                .set(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount() + 1)
+                .set(DelegateTaskKeys.broadcastRound, broadcastRoundCount.get())
                 .set(DelegateTaskKeys.eligibleToExecuteDelegateIds, eligibleDelegatesList)
                 .set(DelegateTaskKeys.alreadyTriedDelegates, alreadyTriedDelegates)
                 .set(DelegateTaskKeys.nextBroadcast, now + nextInterval);
@@ -325,8 +323,9 @@ public class DelegateQueueTask implements Runnable {
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);
              AutoLogContext ignore2 = new AccountLogContext(delegateTask.getAccountId(), OVERRIDE_ERROR)) {
           if (delegateTask.getBroadcastCount() > 1) {
-            log.info("Rebroadcast queued task id {} on broadcast attempt: {} to {} ", delegateTask.getUuid(),
-                delegateTask.getBroadcastCount(), delegateTask.getBroadcastToDelegateIds());
+            log.info("Rebroadcast queued task id {} on broadcast attempt: {} on round {} to {} ",
+                delegateTask.getUuid(), delegateTask.getBroadcastCount(), delegateTask.getBroadcastRound(),
+                delegateTask.getBroadcastToDelegateIds());
           } else {
             log.debug("Broadcast queued task id {}. Broadcast count: {}", delegateTask.getUuid(),
                 delegateTask.getBroadcastCount());

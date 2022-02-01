@@ -300,10 +300,10 @@ public class DelegateQueueTask implements Runnable {
             persistence.createUpdateOperations(DelegateTask.class)
                 .set(DelegateTaskKeys.lastBroadcastAt, now)
                 .set(DelegateTaskKeys.broadcastCount, delegateTask.getBroadcastCount() + 1)
-                .set(DelegateTaskKeys.broadcastRound, broadcastRoundCount.get())
                 .set(DelegateTaskKeys.eligibleToExecuteDelegateIds, eligibleDelegatesList)
+                .set(DelegateTaskKeys.nextBroadcast, now + nextInterval)
                 .set(DelegateTaskKeys.alreadyTriedDelegates, alreadyTriedDelegates)
-                .set(DelegateTaskKeys.nextBroadcast, now + nextInterval);
+                .set(DelegateTaskKeys.broadcastRound, broadcastRoundCount.get());
         delegateTask = persistence.findAndModify(query, updateOperations, HPersistence.returnNewOptions);
         // update failed, means this was broadcast by some other manager
         if (delegateTask == null) {

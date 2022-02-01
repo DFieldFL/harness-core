@@ -40,8 +40,8 @@ public class PlanCreatorServiceHelper {
   }
 
   public Dependencies handlePlanCreationResponses(List<PlanCreationResponse> planCreationResponses,
-                                                  MergePlanCreationResponse finalResponse, String currentYaml, Dependencies dependencies,
-                                                  List<Map.Entry<String, String>> dependenciesList) {
+      MergePlanCreationResponse finalResponse, String currentYaml, Dependencies dependencies,
+      List<Map.Entry<String, String>> dependenciesList) {
     String updatedYaml = currentYaml;
     List<String> errorMessages = planCreationResponses.stream()
                                      .filter(resp -> resp != null && EmptyPredicate.isNotEmpty(resp.getErrorMessages()))

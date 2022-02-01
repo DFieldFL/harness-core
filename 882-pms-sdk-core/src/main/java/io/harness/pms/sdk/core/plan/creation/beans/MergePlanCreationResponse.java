@@ -17,13 +17,13 @@ import io.harness.pms.contracts.plan.Dependency;
 import io.harness.pms.contracts.plan.PlanCreationContextValue;
 import io.harness.pms.contracts.plan.YamlUpdates;
 import io.harness.pms.sdk.core.plan.PlanNode;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Singular;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Singular;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Data
@@ -38,16 +38,16 @@ public class MergePlanCreationResponse implements AsyncCreatorResponse {
   String startingNodeId;
   @Singular List<String> errorMessages;
 
-  public void merge(PlanCreationResponse other) {
+  public void merge(PlanCreationResponse response) {
     // adding PlanNode to map of nodes
-    addNode(other.getPlanNode());
+    addNode(response.getPlanNode());
 
-    addNodes(other.getNodes());
-    addDependencies(other.getDependencies());
-    mergeStartingNodeId(other.getStartingNodeId());
-    mergeContext(other.getContextMap());
-    mergeLayoutNodeInfo(other.getGraphLayoutResponse());
-    addYamlUpdates(other.getYamlUpdates());
+    addNodes(response.getNodes());
+    addDependencies(response.getDependencies());
+    mergeStartingNodeId(response.getStartingNodeId());
+    mergeContext(response.getContextMap());
+    mergeLayoutNodeInfo(response.getGraphLayoutResponse());
+    addYamlUpdates(response.getYamlUpdates());
   }
 
   public void mergeWithoutDependencies(PlanCreationResponse other) {

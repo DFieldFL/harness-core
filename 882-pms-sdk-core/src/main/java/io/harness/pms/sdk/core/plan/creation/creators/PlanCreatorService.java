@@ -131,7 +131,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   }
 
   public Dependencies createPlanForDependencies(
-          PlanCreationContext ctx, MergePlanCreationResponse finalResponse, Dependencies dependencies) {
+      PlanCreationContext ctx, MergePlanCreationResponse finalResponse, Dependencies dependencies) {
     if (EmptyPredicate.isEmpty(dependencies.getDependenciesMap())) {
       return dependencies;
     }

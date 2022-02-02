@@ -85,6 +85,8 @@ func NewPluginTask(step *pb.UnitStep, prevStepOutputs map[string]*pb.StepOutput,
 		displayName:       step.GetDisplayName(),
 		image:             r.GetImage(),
 		entrypoint:        r.GetEntrypoint(),
+		tmpFilePath:       tmpFilePath,
+		envVarOutputs:     r.GetEnvVarOutputs(),
 		environment:       r.GetEnvironment(),
 		reports:           r.GetReports(),
 		timeoutSecs:       timeoutSecs,
@@ -167,14 +169,14 @@ func (t *pluginTask) execute(ctx context.Context, retryCount int32) (map[string]
 	}
 
 	outputFile := filepath.Join(t.tmpFilePath, fmt.Sprintf("%s%s", t.id, outputEnvSuffix))
+	
+	logPluginErr(t.log, "outputFile location constructed", t.id, outputFile, retryCount, start, err)
 
 	envVarsMap, err := t.resolveExprInEnv(ctx)
 	if err != nil {
 		logPluginErr(t.log, "failed to evaluate JEXL expression for settings", t.id, commands, retryCount, start, err)
 		return nil, nil, err
 	}
-
-	envVarsMap["OUTPUT_VARIABLES_LOCATION"] = outputFile
 
 	cmd := t.cmdContextFactory.CmdContextWithSleep(ctx, pluginCmdExitWaitTime, commands[0], commands[1:]...).
 		WithStdout(t.procWriter).WithStderr(t.procWriter).WithEnvVarsMap(envVarsMap)

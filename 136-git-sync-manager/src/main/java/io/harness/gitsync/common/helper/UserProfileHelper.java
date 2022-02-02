@@ -54,7 +54,8 @@ public class UserProfileHelper {
     }
     final GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) connector.getConnector().getConnectorConfig();
     githubConnectorDTO.setUrl(yamlGitConfig.getRepo());
-    final GithubSCMDTO githubUserProfile = getGithubUserProfile(yamlGitConfig.getAccountIdentifier(), userPrincipal);
+    final GithubSCMDTO githubUserProfile =
+        (GithubSCMDTO) getScmUserProfile(yamlGitConfig.getAccountIdentifier(), userPrincipal, SCMType.GITHUB);
     final SecretRefData tokenRef;
     try {
       tokenRef =
@@ -87,7 +88,8 @@ public class UserProfileHelper {
   }
 
   public String getScmUserName(String accountIdentifier) {
-    final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountIdentifier, getUserPrincipal());
+    final GithubSCMDTO githubUserProfile =
+        (GithubSCMDTO) getScmUserProfile(accountIdentifier, getUserPrincipal(), SCMType.GITHUB);
     try {
       return (
           (GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
@@ -99,15 +101,15 @@ public class UserProfileHelper {
     }
   }
 
-  private GithubSCMDTO getGithubUserProfile(String accountId, UserPrincipal userPrincipal) {
+  private SourceCodeManagerDTO getScmUserProfile(String accountId, UserPrincipal userPrincipal, SCMType scmType) {
     final List<SourceCodeManagerDTO> sourceCodeManager =
         sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), accountId);
     final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
-        sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
+        sourceCodeManager.stream().filter(scm -> scm.getType().equals(scmType)).findFirst();
     if (!sourceCodeManagerDTO.isPresent()) {
       log.error("User profile doesn't contain github scm details");
       throw new InvalidRequestException("User profile doesn't contain github scm details");
     }
-    return (GithubSCMDTO) sourceCodeManagerDTO.get();
+    return sourceCodeManagerDTO.get();
   }
 }

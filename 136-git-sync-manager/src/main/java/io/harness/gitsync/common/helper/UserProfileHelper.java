@@ -89,11 +89,10 @@ public class UserProfileHelper {
   public String getScmUserName(String accountIdentifier) {
     final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountIdentifier, getUserPrincipal());
     try {
-      final String scmUserName =
-          ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
-                  .getHttpCredentialsSpec())
-              .getUsername();
-      return scmUserName;
+      return (
+          (GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
+              .getHttpCredentialsSpec())
+          .getUsername();
     } catch (Exception e) {
       log.error("User Profile should contain github username name for git sync", e);
       throw new InvalidRequestException("User Profile should contain github username name for git sync", e);
@@ -109,7 +108,6 @@ public class UserProfileHelper {
       log.error("User profile doesn't contain github scm details");
       throw new InvalidRequestException("User profile doesn't contain github scm details");
     }
-    final GithubSCMDTO githubUserProfile = (GithubSCMDTO) sourceCodeManagerDTO.get();
-    return githubUserProfile;
+    return (GithubSCMDTO) sourceCodeManagerDTO.get();
   }
 }

@@ -89,9 +89,10 @@ public class IntegrationStagePMSPlanCreator extends GenericStagePlanCreator {
     ExecutionSource executionSource = buildExecutionSource(ctx, stageElementConfig);
 
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    boolean cloneCodebase = RunTimeInputHandler.resolveBooleanParameter(integrationStageConfig.getCloneCodebase(), false);
+    boolean cloneCodebase =
+        RunTimeInputHandler.resolveBooleanParameter(integrationStageConfig.getCloneCodebase(), false);
 
-    if(cloneCodebase) {
+    if (cloneCodebase) {
       String codeBaseNodeUUID =
           fetchCodeBaseNodeUUID(ctx, executionField.getNode().getUuid(), executionSource, planCreationResponseMap);
       if (isNotEmpty(codeBaseNodeUUID)) {

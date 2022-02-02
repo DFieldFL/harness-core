@@ -32,7 +32,7 @@ public class PipelineDeleteEvent implements Event {
   private String accountIdentifier;
   private String projectIdentifier;
   private PipelineEntity pipeline;
-  private boolean isFromGit;
+  private Boolean isFromGit;
 
   public PipelineDeleteEvent(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, PipelineEntity pipeline) {
@@ -40,6 +40,7 @@ public class PipelineDeleteEvent implements Event {
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
     this.pipeline = pipeline;
+    this.isFromGit = false;
   }
 
   public PipelineDeleteEvent(String accountIdentifier, String orgIdentifier, String projectIdentifier,
@@ -67,6 +68,13 @@ public class PipelineDeleteEvent implements Event {
         .type(ResourceTypeConstants.PIPELINE)
         .labels(labels)
         .build();
+  }
+
+  public boolean getIsFromGit() {
+    if (isFromGit == null) {
+      return false;
+    }
+    return isFromGit;
   }
 
   @JsonIgnore

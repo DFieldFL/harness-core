@@ -113,7 +113,7 @@ public class PipelineOutboxEventHandler implements OutboxEventHandler {
       principal = ((PrincipalContextData) globalContext.get(PRINCIPAL_CONTEXT)).getPrincipal();
     }
     pipelineActionObserverSubject.fireInform(PipelineActionObserver::onDelete, event);
-    if (event.isFromGit()) {
+    if (event.getIsFromGit()) {
       return true;
     }
     AuditEntry auditEntry = AuditEntry.builder()

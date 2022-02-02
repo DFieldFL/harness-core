@@ -32,12 +32,23 @@ public class PipelineDeleteEvent implements Event {
   private String accountIdentifier;
   private String projectIdentifier;
   private PipelineEntity pipeline;
+  private boolean isFromGit;
+
   public PipelineDeleteEvent(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, PipelineEntity pipeline) {
     this.accountIdentifier = accountIdentifier;
     this.orgIdentifier = orgIdentifier;
     this.projectIdentifier = projectIdentifier;
     this.pipeline = pipeline;
+  }
+
+  public PipelineDeleteEvent(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      PipelineEntity pipeline, boolean isFromGit) {
+    this.accountIdentifier = accountIdentifier;
+    this.orgIdentifier = orgIdentifier;
+    this.projectIdentifier = projectIdentifier;
+    this.pipeline = pipeline;
+    this.isFromGit = isFromGit;
   }
 
   @JsonIgnore

@@ -191,6 +191,7 @@ public class PMSPipelineRepositoryCustomImpl implements PMSPipelineRepositoryCus
         outboxService.save(new PipelineDeleteEvent(pipelineToUpdate.getAccountIdentifier(),
             pipelineToUpdate.getOrgIdentifier(), pipelineToUpdate.getProjectIdentifier(), pipelineToUpdate, true));
       }
+      return pipelineEntity;
     }
     throw new InvalidRequestException("No such pipeline exists");
   }

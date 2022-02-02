@@ -54,14 +54,7 @@ public class UserProfileHelper {
     }
     final GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) connector.getConnector().getConnectorConfig();
     githubConnectorDTO.setUrl(yamlGitConfig.getRepo());
-    final List<SourceCodeManagerDTO> sourceCodeManager =
-        sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), yamlGitConfig.getAccountIdentifier());
-    final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
-        sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
-    if (!sourceCodeManagerDTO.isPresent()) {
-      throw new InvalidRequestException("User profile doesn't contain github scm details");
-    }
-    final GithubSCMDTO githubUserProfile = (GithubSCMDTO) sourceCodeManagerDTO.get();
+    final GithubSCMDTO githubUserProfile = getGithubUserProfile(yamlGitConfig.getAccountIdentifier(), userPrincipal);
     final SecretRefData tokenRef;
     try {
       tokenRef =
@@ -90,5 +83,32 @@ public class UserProfileHelper {
           .build();
     }
     throw new InvalidRequestException("User not set for push event.");
+  }
+
+  public String getScmUserName(String accountId) {
+    final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountId, getUserPrincipal());
+    final String scmUserName;
+    try {
+      scmUserName =
+              ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
+                      .getHttpCredentialsSpec())
+                      .getUsername();
+      return scmUserName;
+    } catch (Exception e) {
+      throw new InvalidRequestException(
+              "User Profile should contain github username name for git sync", e);
+    }
+  }
+
+  private  GithubSCMDTO getGithubUserProfile(String accountId, UserPrincipal userPrincipal) {
+    final List<SourceCodeManagerDTO> sourceCodeManager =
+            sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), accountId);
+    final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
+            sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
+    if (!sourceCodeManagerDTO.isPresent()) {
+      throw new InvalidRequestException("User profile doesn't contain github scm details");
+    }
+    final GithubSCMDTO githubUserProfile = (GithubSCMDTO) sourceCodeManagerDTO.get();
+    return githubUserProfile;
   }
 }

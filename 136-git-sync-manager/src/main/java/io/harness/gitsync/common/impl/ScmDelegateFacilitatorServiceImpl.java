@@ -386,7 +386,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public CreateFileResponse createFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(), infoForPush.getFilePath(),
         infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
         infoForPush.getOrgIdentifier(), infoForPush.getProjectIdentifier(), infoForPush.getScmConnector());
@@ -413,7 +413,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public UpdateFileResponse updateFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(), infoForPush.getFilePath(),
         infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),
@@ -441,7 +441,7 @@ public class ScmDelegateFacilitatorServiceImpl extends AbstractScmClientFacilita
 
   @Override
   public DeleteFileResponse deleteFile(InfoForGitPush infoForPush) {
-    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getYaml(), infoForPush.getFilePath(),
+    GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(), infoForPush.getFilePath(),
         infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     final List<EncryptedDataDetail> encryptionDetails = getEncryptedDataDetails(infoForPush.getAccountId(),

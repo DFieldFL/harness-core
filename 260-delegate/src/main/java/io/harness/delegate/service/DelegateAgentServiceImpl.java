@@ -1685,7 +1685,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                                                    .collect(toList()))
               .location(Paths.get("").toAbsolutePath().toString())
               .build();
-
+      log.info("Delegate version for heartbeat is {}", delegateParams.getVersion());
       try {
         HTimeLimiter.callInterruptible21(
             timeLimiter, Duration.ofSeconds(15), () -> socket.fire(JsonUtils.asJson(delegateParams)));
@@ -1743,6 +1743,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
                                                    .collect(toList()))
               .location(Paths.get("").toAbsolutePath().toString())
               .build();
+      log.info("Delegate version is {}", delegateParams.getVersion());
       lastHeartbeatSentAt.set(clock.millis());
       sentFirstHeartbeat.set(true);
       RestResponse<DelegateHeartbeatResponse> delegateParamsResponse =
@@ -2417,7 +2418,9 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private String getVersion() {
-    return versionInfoManager.getVersionInfo().getVersion();
+    final String version = versionInfoManager.getVersionInfo().getVersion();
+    log.info("Delegate version from properties is {}", version);
+    return version;
   }
 
   private String getVersionWithPatch() {

@@ -67,7 +67,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.AllArgsConstructor;
-import org.hibernate.validator.constraints.NotBlank;
+import retrofit2.http.Body;
 
 @Api("/full-sync")
 @Path("/full-sync")
@@ -150,7 +150,7 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   updateFullSyncConfig(
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
@@ -173,7 +173,7 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<GitFullSyncConfigDTO>
   getFullSyncConfig(
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
@@ -198,7 +198,7 @@ public class GitFullSyncResource {
   @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = EDIT_PROJECT_PERMISSION)
   public ResponseDTO<Boolean>
   deleteFullSyncConfig(
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
@@ -208,16 +208,17 @@ public class GitFullSyncResource {
         gitFullSyncConfigService.delete(accountIdentifier, orgIdentifier, projectIdentifier));
   }
 
-  @GET
+  @POST
   @Path("/files")
   @ApiOperation(value = "List files in full sync along with their status", nickname = "listFullSyncFiles")
   @Operation(operationId = "listFullSyncFiles", summary = "List files in full sync along with their status",
       responses =
       { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "A list of files involved in full sync") })
+  @NGAccessControlCheck(resourceType = ResourceTypes.PROJECT, permission = VIEW_PROJECT_PERMISSION)
   public ResponseDTO<PageResponse<GitFullSyncEntityInfoDTO>>
   listFiles(
       @RequestBody(description = "Details of Page including: size, index, sort") @BeanParam PageRequest pageRequest,
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
           NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
       @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
           NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
@@ -225,29 +226,9 @@ public class GitFullSyncResource {
       harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
       @Parameter(description = GitSyncApiConstants.SEARCH_TERM_PARAM_MESSAGE) @QueryParam(
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
-      @RequestBody(description = "Filters like entityType and syncStatus")
-      @BeanParam GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
+      @RequestBody(description = "Filters like entityType and syncStatus",
+          required = true) @Body GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
     return ResponseDTO.newResponse(gitFullSyncEntityService.list(
         accountIdentifier, orgIdentifier, projectIdentifier, pageRequest, searchTerm, gitFullSyncEntityInfoFilterDTO));
-  }
-
-  @GET
-  @Path("/files/count")
-  @ApiOperation(value = "Count files in full sync for the filter applied", nickname = "countFullSyncFilesWithFilter")
-  @Operation(operationId = "countFullSyncFilesWithFilter", summary = "Count files in full sync for the filter applied",
-      responses =
-      { @io.swagger.v3.oas.annotations.responses.ApiResponse(description = "Count of files for the filter") })
-  public ResponseDTO<Long>
-  countFilesWithFilter(
-      @Parameter(description = ACCOUNT_PARAM_MESSAGE) @NotBlank @QueryParam(
-          NGCommonEntityConstants.ACCOUNT_KEY) @io.harness.accesscontrol.AccountIdentifier String accountIdentifier,
-      @Parameter(description = ORG_PARAM_MESSAGE) @QueryParam(
-          NGCommonEntityConstants.ORG_KEY) @io.harness.accesscontrol.OrgIdentifier @OrgIdentifier String orgIdentifier,
-      @Parameter(description = PROJECT_PARAM_MESSAGE) @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @io.
-      harness.accesscontrol.ProjectIdentifier @ProjectIdentifier String projectIdentifier,
-      @RequestBody(description = "Filters like entityType and syncStatus")
-      @BeanParam GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
-    return ResponseDTO.newResponse(gitFullSyncEntityService.count(
-        accountIdentifier, orgIdentifier, projectIdentifier, gitFullSyncEntityInfoFilterDTO));
   }
 }

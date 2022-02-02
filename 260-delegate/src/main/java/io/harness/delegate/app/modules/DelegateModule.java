@@ -7,6 +7,8 @@
 
 package io.harness.delegate.app.modules;
 
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -783,6 +785,14 @@ public class DelegateModule extends AbstractModule {
 
   @Provides
   @Singleton
+  @Named("taskExecutor")
+  public ExecutorService taskExecutor() {
+    return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
+        new ThreadFactoryBuilder().setNameFormat("task-exec-%d").setPriority(Thread.MIN_PRIORITY).build());
+  }
+
+  @Provides
+  @Singleton
   @Named("asyncExecutor")
   public ExecutorService asyncExecutor() {
     return ThreadPool.create(10, 400, 1, TimeUnit.SECONDS,
@@ -846,6 +856,16 @@ public class DelegateModule extends AbstractModule {
             .setNameFormat("perpetual-task-timeout-%d")
             .setPriority(Thread.NORM_PRIORITY)
             .build());
+  }
+
+  @Provides
+  @Singleton
+  @Named("delegateAgentMetricsExecutor")
+  public ScheduledExecutorService delegateAgentMetricsExecutor() {
+    return newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+                                                .setNameFormat("delegate-agent-metrics-executor-%d")
+                                                .setPriority(Thread.NORM_PRIORITY)
+                                                .build());
   }
 
   @Override

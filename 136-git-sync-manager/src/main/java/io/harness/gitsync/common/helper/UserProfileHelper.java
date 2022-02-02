@@ -90,21 +90,20 @@ public class UserProfileHelper {
     final String scmUserName;
     try {
       scmUserName =
-              ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
-                      .getHttpCredentialsSpec())
-                      .getUsername();
+          ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
+                  .getHttpCredentialsSpec())
+              .getUsername();
       return scmUserName;
     } catch (Exception e) {
-      throw new InvalidRequestException(
-              "User Profile should contain github username name for git sync", e);
+      throw new InvalidRequestException("User Profile should contain github username name for git sync", e);
     }
   }
 
-  private  GithubSCMDTO getGithubUserProfile(String accountId, UserPrincipal userPrincipal) {
+  private GithubSCMDTO getGithubUserProfile(String accountId, UserPrincipal userPrincipal) {
     final List<SourceCodeManagerDTO> sourceCodeManager =
-            sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), accountId);
+        sourceCodeManagerService.get(userPrincipal.getUserId().getValue(), accountId);
     final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
-            sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
+        sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
     if (!sourceCodeManagerDTO.isPresent()) {
       throw new InvalidRequestException("User profile doesn't contain github scm details");
     }

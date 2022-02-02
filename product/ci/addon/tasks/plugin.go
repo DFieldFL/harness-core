@@ -170,7 +170,7 @@ func (t *pluginTask) execute(ctx context.Context, retryCount int32) (map[string]
 
 	outputFile := filepath.Join(t.tmpFilePath, fmt.Sprintf("%s%s", t.id, outputEnvSuffix))
 	
-	logPluginErr(t.log, "outputFile location constructed", t.id, outputFile, retryCount, start, err)
+	logPluginErr(t.log, "outputFile location constructed", t.id, []string{outputFile}, retryCount, start, nil)
 
 	envVarsMap, err := t.resolveExprInEnv(ctx)
 	if err != nil {

@@ -75,6 +75,7 @@ import software.wings.service.impl.DelegateServiceImpl;
 import software.wings.service.intfc.DelegateScopeService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.DownloadTokenService;
+import software.wings.service.intfc.HarnessUserGroupService;
 import software.wings.utils.ResourceTestRule;
 
 import java.io.File;
@@ -117,6 +118,7 @@ public class DelegateSetupResourceTest extends CategoryTest {
   private static SubdomainUrlHelperIntfc subdomainUrlHelper = mock(SubdomainUrlHelperIntfc.class);
   private static DelegateCache delegateCache = mock(DelegateCache.class);
   private static AccessControlClient accessControlClient = mock(AccessControlClient.class);
+  private static HarnessUserGroupService harnessUserGroupService = mock(HarnessUserGroupService.class);
 
   @Parameter public String apiUrl;
 
@@ -129,9 +131,9 @@ public class DelegateSetupResourceTest extends CategoryTest {
   public static final ResourceTestRule RESOURCES =
       ResourceTestRule.builder()
           .instance(new DelegateSetupResource(delegateService, delegateScopeService, downloadTokenService,
-              subdomainUrlHelper, delegateCache, accessControlClient))
+              subdomainUrlHelper, delegateCache, accessControlClient, harnessUserGroupService))
           .instance(new DelegateSetupResourceV3(delegateService, delegateScopeService, downloadTokenService,
-              subdomainUrlHelper, delegateCache, accessControlClient, delegateSetupService))
+              subdomainUrlHelper, delegateCache, accessControlClient, delegateSetupService, harnessUserGroupService))
           .instance(new AbstractBinder() {
             @Override
             protected void configure() {

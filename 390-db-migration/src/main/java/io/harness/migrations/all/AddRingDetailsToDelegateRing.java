@@ -16,6 +16,7 @@ import io.harness.migrations.Migration;
 import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,49 +30,27 @@ public class AddRingDetailsToDelegateRing implements Migration {
   public void migrate() {
     log.info("Starting the migration for adding ring details in delegateRing collection.");
 
-    try {
-      DelegateRing delegateRing = persistence.createQuery(DelegateRing.class)
-                                      .filter(DelegateRingKeys.ringName, DelegateRingConstants.RING_NAME_1)
-                                      .get();
-      if (delegateRing != null) {
-        log.info("Delegate Ring ring1 exists. Skipping migration for ring1.");
-      } else {
-        persistence.save(delegateRing(DelegateRingConstants.RING_NAME_1));
-        log.info("Added ring1 details.");
-      }
-    } catch (Exception e) {
-      log.error("Exception occurred during migration of adding delegate ring1.", e);
-    }
-
-    try {
-      DelegateRing delegateRing = persistence.createQuery(DelegateRing.class)
-                                      .filter(DelegateRingKeys.ringName, DelegateRingConstants.RING_NAME_2)
-                                      .get();
-      if (delegateRing != null) {
-        log.info("Delegate Ring ring2 exists. Skipping migration for ring2.");
-      } else {
-        persistence.save(delegateRing(DelegateRingConstants.RING_NAME_2));
-        log.info("Added ring2 details.");
-      }
-    } catch (Exception e) {
-      log.error("Exception occurred during migration of adding delegate ring2.", e);
-    }
-
-    try {
-      DelegateRing delegateRing = persistence.createQuery(DelegateRing.class)
-                                      .filter(DelegateRingKeys.ringName, DelegateRingConstants.RING_NAME_3)
-                                      .get();
-      if (delegateRing != null) {
-        log.info("Delegate Ring ring3 exists. Skipping migration for ring3.");
-      } else {
-        persistence.save(delegateRing(DelegateRingConstants.RING_NAME_3));
-        log.info("Added ring3 details.");
-      }
-    } catch (Exception e) {
-      log.error("Exception occurred during migration of adding delegate ring3.", e);
+    for (String ringName : Arrays.asList(
+             DelegateRingConstants.RING_NAME_1, DelegateRingConstants.RING_NAME_2, DelegateRingConstants.RING_NAME_3)) {
+      checkAndInsertDelegateRing(ringName);
     }
 
     log.info("Migration complete for adding ring details in delegateRing collection.");
+  }
+
+  private void checkAndInsertDelegateRing(String ringName) {
+    try {
+      DelegateRing delegateRing =
+          persistence.createQuery(DelegateRing.class).filter(DelegateRingKeys.ringName, ringName).get();
+      if (delegateRing != null) {
+        log.info("Delegate Ring {} exists. Hence skipping migration for delegate ring {}.", ringName, ringName);
+      } else {
+        persistence.save(delegateRing(ringName));
+        log.info("Added {} details.", ringName);
+      }
+    } catch (Exception e) {
+      log.error("Exception occurred during migration of adding delegate {}.", ringName, e);
+    }
   }
 
   private DelegateRing delegateRing(String ringName) {

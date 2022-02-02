@@ -87,9 +87,8 @@ public class UserProfileHelper {
 
   public String getScmUserName(String accountId) {
     final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountId, getUserPrincipal());
-    final String scmUserName;
     try {
-      scmUserName =
+      final String scmUserName =
           ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
                   .getHttpCredentialsSpec())
               .getUsername();

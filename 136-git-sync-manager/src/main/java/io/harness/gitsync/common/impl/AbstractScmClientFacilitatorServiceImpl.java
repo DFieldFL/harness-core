@@ -160,10 +160,9 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
 
   private String getSmcUserName(String accountId) {
     String scmUserName = "";
-    try{
+    try {
       scmUserName = userProfileHelper.getScmUserName(accountId);
-    } catch(Exception ex){
-      log.error("Error getting Scm profile", ex);
+    } catch (Exception ex) {
     }
     return scmUserName;
   }

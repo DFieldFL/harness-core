@@ -82,11 +82,12 @@ public class UserProfileHelper {
           .setUserName(StringValue.of(userPrincipal.getUsername()))
           .build();
     }
+    log.error("User not set for push event.");
     throw new InvalidRequestException("User not set for push event.");
   }
 
-  public String getScmUserName(String accountId) {
-    final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountId, getUserPrincipal());
+  public String getScmUserName(String accountIdentifier) {
+    final GithubSCMDTO githubUserProfile = getGithubUserProfile(accountIdentifier, getUserPrincipal());
     try {
       final String scmUserName =
           ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
@@ -94,6 +95,7 @@ public class UserProfileHelper {
               .getUsername();
       return scmUserName;
     } catch (Exception e) {
+      log.error("User Profile should contain github username name for git sync", e);
       throw new InvalidRequestException("User Profile should contain github username name for git sync", e);
     }
   }
@@ -104,6 +106,7 @@ public class UserProfileHelper {
     final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
         sourceCodeManager.stream().filter(scm -> scm.getType().equals(SCMType.GITHUB)).findFirst();
     if (!sourceCodeManagerDTO.isPresent()) {
+      log.error("User profile doesn't contain github scm details");
       throw new InvalidRequestException("User profile doesn't contain github scm details");
     }
     final GithubSCMDTO githubUserProfile = (GithubSCMDTO) sourceCodeManagerDTO.get();

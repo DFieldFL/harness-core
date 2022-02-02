@@ -7,10 +7,13 @@
 
 package io.harness.ci.plan.creator.stage;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.CI;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.CI_CODE_BASE;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.EXECUTION;
+import static io.harness.pms.yaml.YAMLFieldNameConstants.PROPERTIES;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.build.BuildStatusUpdateParameter;
@@ -42,24 +45,28 @@ import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationResponse;
-import io.harness.pms.yaml.*;
+import io.harness.pms.yaml.DependenciesUtils;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.pms.yaml.YamlField;
+import io.harness.pms.yaml.YamlNode;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.states.CISpecStep;
 import io.harness.states.IntegrationStageStepPMS;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.yaml.extended.ci.codebase.CodeBase;
 import io.harness.yaml.utils.JsonPipelineUtils;
-import lombok.extern.slf4j.Slf4j;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.data.structure.UUIDGenerator.generateUuid;
-import static io.harness.pms.yaml.YAMLFieldNameConstants.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CI)

@@ -9,13 +9,13 @@ while Var:respCode not equal to Var:httpOk {
   respCode = Var:rawResults[1]
   sleep(1000)
 }
-Var hostname = "errortracking"
 Var resultData = Var:rawResults[0]
 Var results = extract(Var:resultData,$.results)
 Var logs = []
 foreach rawLog in Var:results {
     Var log = extract(Var:rawLog, $.logMsg)
     Var timestamp = extract(Var:rawLog, $.time)
+    Var hostname = extract(Var:rawLog, $.requestId)
     Var format = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
     Var logToReturn = new LogDataRecord(log=Var:log, timestamp=Var:timestamp, timestampFormat=Var:format, host=Var:hostname)
     Var:logs.append(Var:logToReturn)

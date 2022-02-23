@@ -1,4 +1,4 @@
-Var resultsUrl = concat(Env:baseUrl, "?serviceId=", Env:sid, "&applicationId=", Env:serviceId, "&environmentId=", Env:environmentId, "&fromDateTime=", Env:startTimeSeconds, "&toDateTime=", Env:endTimeSeconds)
+Var resultsUrl = concat(Env:baseUrl, "?accountId=", Env:sid, "&orgId=", Env:sid, "&projectId=", Env:sid, "&serviceId=", Env:serviceId, "&environmentId=", Env:environmentId, "&fromDateTime=", Env:startTimeSeconds, "&toDateTime=", Env:endTimeSeconds)
 print Var:resultsUrl
 Var rawResults = sync-call-with-code(url=Var:resultsUrl, header=Env:commonHeaders)
 Var respCode = Var:rawResults[1]

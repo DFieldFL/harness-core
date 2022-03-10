@@ -43,6 +43,7 @@ public class DeploymentActivityResultDTO {
     AdditionalInfo additionalInfo;
     TimeSeriesAnalysisSummary timeSeriesAnalysisSummary;
     LogsAnalysisSummary logsAnalysisSummary;
+    ErrorAnalysisSummary errorAnalysisSummary;
   }
 
   @Value
@@ -55,6 +56,13 @@ public class DeploymentActivityResultDTO {
   @Value
   @Builder
   public static class LogsAnalysisSummary {
+    int totalClusterCount;
+    int anomalousClusterCount;
+  }
+
+  @Value
+  @Builder
+  public static class ErrorAnalysisSummary {
     int totalClusterCount;
     int anomalousClusterCount;
   }

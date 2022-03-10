@@ -112,6 +112,9 @@ public class CVNGStepTaskServiceImpl implements CVNGStepTaskService {
         deploymentTimeSeriesAnalysisService.getAnalysisSummary(Arrays.asList(stepTask.getVerificationJobInstanceId())));
     deploymentVerificationJobInstanceSummary.setLogsAnalysisSummary(deploymentLogAnalysisService.getAnalysisSummary(
         stepTask.getAccountId(), Arrays.asList(stepTask.getVerificationJobInstanceId())));
+    deploymentVerificationJobInstanceSummary.setErrorAnalysisSummary(
+        deploymentLogAnalysisService.getErrorAnalysisSummary(
+            stepTask.getAccountId(), Arrays.asList(stepTask.getVerificationJobInstanceId())));
     return DeploymentActivitySummaryDTO.builder()
         .deploymentVerificationJobInstanceSummary(deploymentVerificationJobInstanceSummary)
         .serviceIdentifier(stepTask.getServiceIdentifier())

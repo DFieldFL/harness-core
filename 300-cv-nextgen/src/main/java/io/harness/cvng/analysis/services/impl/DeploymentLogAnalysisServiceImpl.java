@@ -11,6 +11,7 @@ import static io.harness.cvng.CVConstants.TAG_DATA_SOURCE;
 import static io.harness.cvng.beans.MonitoredServiceDataSourceType.ERROR_TRACKING;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
+import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.ErrorAnalysisSummary;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.LogsAnalysisSummary;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.Cluster;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.ClusterSummary;
@@ -24,6 +25,7 @@ import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis.DeploymentLogAnalysisKeys;
 import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
+import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentLogAnalysisFilter;
 import io.harness.cvng.core.entities.CVConfig;
@@ -208,6 +210,36 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
       totalClusterCounts.add(totalClusters);
     });
     return LogsAnalysisSummary.builder()
+        .anomalousClusterCount(anomClusterCounts.stream().mapToInt(Integer::intValue).sum())
+        .totalClusterCount(totalClusterCounts.stream().mapToInt(Integer::intValue).sum())
+        .build();
+  }
+
+  @Override
+  public ErrorAnalysisSummary getErrorAnalysisSummary(String accountId, List<String> verificationJobInstanceIds) {
+    List<Integer> anomClusterCounts = new ArrayList<>();
+    List<Integer> totalClusterCounts = new ArrayList<>();
+
+    Preconditions.checkNotNull(
+        verificationJobInstanceIds, "Missing verificationJobInstanceIds when looking for summary");
+    DeploymentLogAnalysisFilter filter =
+        DeploymentLogAnalysisFilter.builder().hostName(DataSourceType.ERROR_TRACKING.getDisplayName()).build();
+
+    verificationJobInstanceIds.forEach(verificationJobInstanceId -> {
+      List<LogAnalysisClusterDTO> logAnalysisClusters =
+          getLogAnalysisResult(accountId, verificationJobInstanceId, null, filter);
+      int anomClusters = 0, totalClusters = 0;
+      for (LogAnalysisClusterDTO logAnalysisClusterDTO : logAnalysisClusters) {
+        if (logAnalysisClusterDTO.getRisk().isGreaterThan(Risk.HEALTHY)) {
+          anomClusters++;
+        }
+        totalClusters++;
+      }
+      anomClusterCounts.add(anomClusters);
+      totalClusterCounts.add(totalClusters);
+    });
+
+    return ErrorAnalysisSummary.builder()
         .anomalousClusterCount(anomClusterCounts.stream().mapToInt(Integer::intValue).sum())
         .totalClusterCount(totalClusterCounts.stream().mapToInt(Integer::intValue).sum())
         .build();

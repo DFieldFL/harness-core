@@ -7,6 +7,7 @@
 
 package io.harness.cvng.analysis.services.api;
 
+import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.ErrorAnalysisSummary;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.LogsAnalysisSummary;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
@@ -35,6 +36,8 @@ public interface DeploymentLogAnalysisService {
   DeploymentLogAnalysis getRecentHighestDeploymentLogAnalysis(String accountId, String verificationJobInstanceId);
 
   LogsAnalysisSummary getAnalysisSummary(String accountId, List<String> verificationJobInstanceIds);
+
+  ErrorAnalysisSummary getErrorAnalysisSummary(String accountId, List<String> verificationJobInstanceIds);
 
   PageResponse<LogAnalysisClusterDTO> getLogAnalysisResult(String accountId, String verificationJobInstanceId,
       Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams);

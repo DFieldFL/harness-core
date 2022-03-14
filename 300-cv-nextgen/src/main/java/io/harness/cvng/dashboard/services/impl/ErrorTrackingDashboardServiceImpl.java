@@ -64,19 +64,19 @@ public class ErrorTrackingDashboardServiceImpl implements ErrorTrackingDashboard
 
   @Override
   public List<LiveMonitoringLogAnalysisClusterDTO> getLogAnalysisClusters(MonitoredServiceParams monitoredServiceParams,
-                                                                          TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter) {
+      TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter) {
     List<LiveMonitoringLogAnalysisClusterDTO> liveMonitoringLogAnalysisClusterDTOS = new ArrayList<>();
     List<String> cvConfigIds = getCVConfigs(monitoredServiceParams, liveMonitoringLogAnalysisFilter)
-            .stream()
-            .map(CVConfig::getUuid)
-            .collect(Collectors.toList());
+                                   .stream()
+                                   .map(CVConfig::getUuid)
+                                   .collect(Collectors.toList());
     List<LogAnalysisResult.LogAnalysisTag> tags = liveMonitoringLogAnalysisFilter.filterByClusterTypes()
-            ? liveMonitoringLogAnalysisFilter.getClusterTypes()
-            : Arrays.asList(LogAnalysisResult.LogAnalysisTag.values());
+        ? liveMonitoringLogAnalysisFilter.getClusterTypes()
+        : Arrays.asList(LogAnalysisResult.LogAnalysisTag.values());
 
     cvConfigIds.forEach(cvConfigId -> {
       List<LogAnalysisResult.AnalysisResult> logAnalysisResults =
-              getAnalysisResultForCvConfigId(cvConfigId, timeRangeParams.getStartTime(), timeRangeParams.getEndTime());
+          getAnalysisResultForCvConfigId(cvConfigId, timeRangeParams.getStartTime(), timeRangeParams.getEndTime());
 
       Map<Long, LogAnalysisResult.LogAnalysisTag> labelTagMap = new HashMap<>();
       logAnalysisResults.forEach(result -> {
@@ -87,21 +87,21 @@ public class ErrorTrackingDashboardServiceImpl implements ErrorTrackingDashboard
       });
 
       String verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(
-              monitoredServiceParams.getAccountIdentifier(), cvConfigId);
+          monitoredServiceParams.getAccountIdentifier(), cvConfigId);
       List<LogAnalysisCluster> clusters =
-              logAnalysisService.getAnalysisClusters(verificationTaskId, labelTagMap.keySet());
+          logAnalysisService.getAnalysisClusters(verificationTaskId, labelTagMap.keySet());
       clusters.forEach(logAnalysisCluster -> {
         liveMonitoringLogAnalysisClusterDTOS.add(LiveMonitoringLogAnalysisClusterDTO.builder()
-                .x(logAnalysisCluster.getX())
-                .y(logAnalysisCluster.getY())
-                .tag(labelTagMap.get(logAnalysisCluster.getLabel()))
-                .text(logAnalysisCluster.getText())
-                .build());
+                                                     .x(logAnalysisCluster.getX())
+                                                     .y(logAnalysisCluster.getY())
+                                                     .tag(labelTagMap.get(logAnalysisCluster.getLabel()))
+                                                     .text(logAnalysisCluster.getText())
+                                                     .build());
       });
     });
     return liveMonitoringLogAnalysisClusterDTOS.stream()
-            .filter(cluster -> tags.contains(cluster.getTag()))
-            .collect(Collectors.toList());
+        .filter(cluster -> tags.contains(cluster.getTag()))
+        .collect(Collectors.toList());
   }
 
   private List<CVConfig> getCVConfigs(

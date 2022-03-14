@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +36,7 @@ import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.LiveMonitoringLogAnalysisFilter;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.ErrorTrackingCVConfig;
 import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -63,6 +65,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -111,6 +114,7 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testGetAllLogsData_anomalousLogs() {
     String cvConfigId = generateUuid();
+    String errorTrackingCvConfigId = generateUuid();
     Instant startTime = Instant.now().minus(10, ChronoUnit.MINUTES);
     Instant endTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -120,7 +124,8 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
     List<Long> labelList = Arrays.asList(1234l, 12345l, 123455l, 12334l);
     List<LogAnalysisResult> resultList = buildLogAnalysisResults(cvConfigId, true, startTime, endTime, labelList);
     when(mockCvConfigService.list(builderFactory.getContext().getMonitoredServiceParams()))
-        .thenReturn(Arrays.asList(createCvConfig(cvConfigId, serviceIdentifier)));
+        .thenReturn(Arrays.asList(createCvConfig(cvConfigId, serviceIdentifier),
+            createErrorTrackingCvConfig(errorTrackingCvConfigId, serviceIdentifier)));
     when(mockLogAnalysisService.getAnalysisResults(anyString(), any(), any())).thenReturn(resultList);
     when(mockLogAnalysisService.getAnalysisClusters(cvConfigId, new HashSet<>(labelList)))
         .thenReturn(buildLogAnalysisClusters(labelList));
@@ -133,6 +138,11 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
     PageResponse<AnalyzedLogDataDTO> pageResponse =
         logDashboardService.getAllLogsData(builderFactory.getContext().getMonitoredServiceParams(), timeRangeParams,
             liveMonitoringLogAnalysisFilter, pageParams);
+
+    // Verify Error Tracking configs are being filtered out
+    ArgumentCaptor<String> cvConfigIdCapture = ArgumentCaptor.forClass(String.class);
+    verify(mockLogAnalysisService, times(1)).getAnalysisResults(cvConfigIdCapture.capture(), any(), any());
+    assertThat(cvConfigIdCapture.getValue()).isNotEqualTo(errorTrackingCvConfigId);
 
     verify(mockCvConfigService).list(builderFactory.getContext().getMonitoredServiceParams());
     assertThat(pageResponse).isNotNull();
@@ -902,5 +912,12 @@ public class LogDashboardServiceImplTest extends CvNextGenTestBase {
     splunkCVConfig.setUuid(cvConfigId);
     splunkCVConfig.setServiceIdentifier(serviceIdentifier);
     return splunkCVConfig;
+  }
+
+  private CVConfig createErrorTrackingCvConfig(String cvConfigId, String serviceIdentifier) {
+    ErrorTrackingCVConfig cvConfig = new ErrorTrackingCVConfig();
+    cvConfig.setUuid(cvConfigId);
+    cvConfig.setServiceIdentifier(serviceIdentifier);
+    return cvConfig;
   }
 }

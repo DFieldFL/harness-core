@@ -41,7 +41,7 @@ public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<Error
     if (!url.endsWith("/")) {
       url += "/";
     }
-    url += "et/dashboard/eventlog";
+    url += "api/dashboard/eventlog";
     return url;
   }
 

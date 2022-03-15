@@ -22,7 +22,6 @@ public class ErrorTrackingEntityToDTO
   public ErrorTrackingConnectorDTO createConnectorDTO(ErrorTrackingConnector connector) {
     return ErrorTrackingConnectorDTO.builder()
         .url(connector.getUrl())
-        .sid(connector.getSid())
         .apiKeyRef(SecretRefHelper.createSecretRef(connector.getApiKeyRef()))
         .build();
   }

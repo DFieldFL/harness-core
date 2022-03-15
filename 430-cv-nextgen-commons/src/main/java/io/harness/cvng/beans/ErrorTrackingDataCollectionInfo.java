@@ -21,6 +21,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<ErrorTrackingConnectorDTO> {
   private String accountId;
+  private String orgId;
+  private String projectId;
   private String serviceId;
   private String environmentId;
   private String versionId;
@@ -28,7 +30,9 @@ public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<Error
   @Override
   public Map<String, Object> getDslEnvVariables(ErrorTrackingConnectorDTO overOpsConnectorDTO) {
     Map<String, Object> map = new HashMap<>();
-    map.put("sid", overOpsConnectorDTO.getSid());
+    map.put("accountId", accountId);
+    map.put("orgId", orgId);
+    map.put("projectId", projectId);
     map.put("versionId", versionId == null ? "" : versionId);
     map.put("serviceId", serviceId);
     map.put("environmentId", environmentId);

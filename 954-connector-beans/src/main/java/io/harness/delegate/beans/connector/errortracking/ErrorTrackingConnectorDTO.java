@@ -40,7 +40,6 @@ import org.hibernate.validator.constraints.NotBlank;
 @OwnedBy(HarnessTeam.CV)
 public class ErrorTrackingConnectorDTO extends ConnectorConfigDTO implements DecryptableEntity, DelegateSelectable {
   @NotNull @NotBlank String url;
-  @NotNull @NotBlank String sid;
   @NotNull @SecretReference @ApiModelProperty(dataType = "string") SecretRefData apiKeyRef;
   Set<String> delegateSelectors;
 

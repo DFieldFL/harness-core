@@ -2389,7 +2389,6 @@
           "type": "object",
           "required": [
             "apiKeyRef",
-            "sid",
             "url"
           ],
           "properties": {
@@ -2402,9 +2401,6 @@
               "items": {
                 "type": "string"
               }
-            },
-            "sid": {
-              "type": "string"
             },
             "url": {
               "type": "string"

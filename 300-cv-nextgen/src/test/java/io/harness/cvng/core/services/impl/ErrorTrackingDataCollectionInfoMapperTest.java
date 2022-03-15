@@ -37,6 +37,8 @@ public class ErrorTrackingDataCollectionInfoMapperTest extends CvNextGenTestBase
     cvConfig.setEnvIdentifier(randomAlphabetic(10));
     cvConfig.setUuid(generateUuid());
     cvConfig.setAccountId(generateUuid());
+    cvConfig.setOrgIdentifier(generateUuid());
+    cvConfig.setProjectIdentifier(generateUuid());
     ErrorTrackingDataCollectionInfo overOpsDataCollectionInfo =
         mapper.toDataCollectionInfo(cvConfig, VerificationTask.TaskType.DEPLOYMENT);
     assertThat(overOpsDataCollectionInfo.getServiceId()).isEqualTo(cvConfig.getServiceIdentifier());
@@ -44,5 +46,7 @@ public class ErrorTrackingDataCollectionInfoMapperTest extends CvNextGenTestBase
     assertThat(overOpsDataCollectionInfo.getVerificationType()).isEqualTo(VerificationType.LOG);
     assertThat(overOpsDataCollectionInfo.getDataCollectionDsl()).isEqualTo(cvConfig.getDataCollectionDsl());
     assertThat(overOpsDataCollectionInfo.getAccountId()).isEqualTo(cvConfig.getAccountId());
+    assertThat(overOpsDataCollectionInfo.getOrgId()).isEqualTo(cvConfig.getOrgIdentifier());
+    assertThat(overOpsDataCollectionInfo.getProjectId()).isEqualTo(cvConfig.getProjectIdentifier());
   }
 }

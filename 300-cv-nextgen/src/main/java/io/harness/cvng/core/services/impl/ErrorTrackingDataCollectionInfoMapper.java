@@ -17,13 +17,15 @@ public class ErrorTrackingDataCollectionInfoMapper
   @Override
   public ErrorTrackingDataCollectionInfo toDataCollectionInfo(
       ErrorTrackingCVConfig cvConfig, VerificationTask.TaskType taskType) {
-    ErrorTrackingDataCollectionInfo overOpsDataCollectionInfo = ErrorTrackingDataCollectionInfo.builder()
-                                                                    .accountId(cvConfig.getAccountId())
-                                                                    .serviceId(cvConfig.getServiceIdentifier())
-                                                                    .environmentId(cvConfig.getEnvIdentifier())
-                                                                    .build();
-    overOpsDataCollectionInfo.setDataCollectionDsl(cvConfig.getDataCollectionDsl());
-    overOpsDataCollectionInfo.setHostCollectionDSL(cvConfig.getHostCollectionDSL());
-    return overOpsDataCollectionInfo;
+    ErrorTrackingDataCollectionInfo errorTrackingDataCollectionInfo = ErrorTrackingDataCollectionInfo.builder()
+                                                                          .accountId(cvConfig.getAccountId())
+                                                                          .orgId(cvConfig.getOrgIdentifier())
+                                                                          .projectId(cvConfig.getProjectIdentifier())
+                                                                          .serviceId(cvConfig.getServiceIdentifier())
+                                                                          .environmentId(cvConfig.getEnvIdentifier())
+                                                                          .build();
+    errorTrackingDataCollectionInfo.setDataCollectionDsl(cvConfig.getDataCollectionDsl());
+    errorTrackingDataCollectionInfo.setHostCollectionDSL(cvConfig.getHostCollectionDSL());
+    return errorTrackingDataCollectionInfo;
   }
 }

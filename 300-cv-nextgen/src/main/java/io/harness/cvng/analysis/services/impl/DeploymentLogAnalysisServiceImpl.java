@@ -424,10 +424,7 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
   private List<LogAnalysisClusterDTO> getOverallLogAnalysisClusters(
       DeploymentLogAnalysis deploymentLogAnalysis, Integer label) {
     List<LogAnalysisClusterDTO> logAnalysisClusters = new ArrayList<>();
-    VerificationTask verificationTask =
-        hPersistence.createQuery(VerificationTask.class)
-            .filter(VerificationTaskKeys.uuid, deploymentLogAnalysis.getVerificationTaskId())
-            .get();
+    VerificationTask verificationTask = verificationTaskService.get(deploymentLogAnalysis.getVerificationTaskId());
     if (!ERROR_TRACKING.name().equals(verificationTask.getTags().get(TAG_DATA_SOURCE))) {
       deploymentLogAnalysis.getClusters()
           .stream()
@@ -557,7 +554,12 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
         }
       }
     } else {
-      resultSummary = deploymentLogAnalysis.getResultSummary();
+      // Make sure Error Tracking entries are filtered. Error Tracking for the time being is extending the use of Logs
+      // until it gets its own type
+      VerificationTask verificationTask = verificationTaskService.get(deploymentLogAnalysis.getVerificationTaskId());
+      if (!ERROR_TRACKING.name().equals(verificationTask.getTags().get(TAG_DATA_SOURCE))) {
+        resultSummary = deploymentLogAnalysis.getResultSummary();
+      }
     }
 
     if (resultSummary == null) {

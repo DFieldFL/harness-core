@@ -41,11 +41,11 @@ public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<Error
 
   @Override
   public String getBaseUrl(ErrorTrackingConnectorDTO overOpsConnectorDTO) {
-    String url = overOpsConnectorDTO.getUrl();
+    String url = System.getenv("MANAGER_HOST_AND_PORT");
     if (!url.endsWith("/")) {
       url += "/";
     }
-    url += "api/dashboard/eventlog";
+    url += "et/api/dashboard/eventlog";
     return url;
   }
 

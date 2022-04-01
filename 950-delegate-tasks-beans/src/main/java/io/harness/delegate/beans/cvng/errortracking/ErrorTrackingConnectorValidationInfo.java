@@ -34,7 +34,6 @@ public class ErrorTrackingConnectorValidationInfo extends ConnectorValidationInf
 
   @Override
   public Map<String, String> collectionHeaders() {
-    //    headers.put("Authorization", OverOpsUtils.getAuthorizationHeader(connectorConfigDTO));
     return new HashMap<>();
   }
 }

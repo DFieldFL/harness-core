@@ -354,7 +354,10 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
         accountId, verificationJobInstanceId, DeploymentLogAnalysisFilter.builder().build())
         .stream()
         .flatMap(deploymentLogAnalysis
-            -> deploymentLogAnalysis.getHostSummaries().stream().map(hostSummary -> hostSummary.getHost()))
+            -> deploymentLogAnalysis.getHostSummaries()
+                   .stream()
+                   .map(DeploymentLogAnalysisDTO.HostSummary::getHost)
+                   .filter(host -> !DataSourceType.ERROR_TRACKING.getDisplayName().equals(host)))
         .collect(Collectors.toSet());
   }
 

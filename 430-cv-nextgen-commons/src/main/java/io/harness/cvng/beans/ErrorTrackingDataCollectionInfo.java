@@ -7,17 +7,25 @@
 
 package io.harness.cvng.beans;
 
+import io.harness.delegate.DelegateAgentCommonVariables;
 import io.harness.delegate.beans.connector.errortracking.ErrorTrackingConnectorDTO;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.harness.security.TokenGenerator;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+
+import static io.harness.network.Localhost.getLocalHostName;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 @Data
 @Builder
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
 public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<ErrorTrackingConnectorDTO> {
   private String accountId;
@@ -54,6 +62,23 @@ public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<Error
     Map<String, String> headers = new HashMap<>();
     headers.put("X-API-Key", new String(overOpsConnectorDTO.getApiKeyRef().getDecryptedValue()));
     headers.put("accountId", accountId);
+    String delegateToken = System.getenv("DELEGATE_TOKEN");
+    if (isEmpty(delegateToken)) {
+      delegateToken = System.getenv("ACCOUNT_SECRET");
+    }
+
+    if (!isEmpty(delegateToken)) {
+      log.info("Error Tracking found the delegate token");
+
+      String url = System.getenv("MANAGER_HOST_AND_PORT");
+
+      TokenGenerator tokenGenerator = new TokenGenerator(accountId, delegateToken);
+      String token = tokenGenerator.getToken(url, getLocalHostName());
+
+      headers.put("Authorization", "Delegate " + token);
+      headers.put("delegateId", DelegateAgentCommonVariables.getDelegateId());
+    }
+
     return headers;
   }
 
